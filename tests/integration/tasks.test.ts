@@ -46,16 +46,21 @@ describe('Tasks API', () => {
     let req = request(app).post('/api/teams').set('Cookie', managerCookies);
     req = setCsrfHeadersIfEnabled(req, csrfToken);
     const teamResponse = await req.send({ name: 'Test Team' });
-
+    expect(teamResponse.status, `Team creation failed: ${JSON.stringify(teamResponse.body)}`).toBe(
+      201
+    );
     teamId = teamResponse.body.id;
 
     // Add member to team so RLS allows them to access team resources
     const { token: memberCsrfToken } = await getCsrfToken(managerCookies);
-    await request(app)
+    const memberResponse = await request(app)
       .post(`/api/teams/${teamId}/members`)
       .set('Cookie', managerCookies)
       .set('X-CSRF-Token', memberCsrfToken)
       .send({ user_id: userId });
+    expect(memberResponse.status, `Add member failed: ${JSON.stringify(memberResponse.body)}`).toBe(
+      201
+    );
 
     const { token: boardCsrfToken } = await getCsrfToken(managerCookies);
     const boardResponse = await request(app)
@@ -66,7 +71,10 @@ describe('Tasks API', () => {
         name: 'Test Board',
         team_id: teamId,
       });
-
+    expect(
+      boardResponse.status,
+      `Board creation failed: ${JSON.stringify(boardResponse.body)}`
+    ).toBe(201);
     boardId = boardResponse.body.id;
 
     const { token: listCsrfToken } = await getCsrfToken(managerCookies);
@@ -78,7 +86,9 @@ describe('Tasks API', () => {
         name: 'Test List',
         board_id: boardId,
       });
-
+    expect(listResponse.status, `List creation failed: ${JSON.stringify(listResponse.body)}`).toBe(
+      201
+    );
     listId = listResponse.body.id;
   });
 
